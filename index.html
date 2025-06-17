@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>没木工作室 - 创意设计与开发</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #1a252f;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: '思源黑体', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            line-height: 1.6;
+            color: var(--dark);
+            background-color: #f9f9f9;
+            overflow-x: hidden;
+        }
+
+        /* 动态模糊效果 */
+        .blur-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(0px);
+            z-index: -1;
+            transition: backdrop-filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.scrolled .blur-overlay {
+            backdrop-filter: blur(8px);
+        }
+
+        /* 非线性动画类 */
+        .animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .animate.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* 导航栏 */
+        .header {
+            background-color: rgba(44, 62, 80, 0.9);
+            color: white;
+            padding: 1rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .header.scrolled {
+            background-color: rgba(26, 37, 47, 0.98);
+            padding: 0.5rem 1rem;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            color: var(--accent);
+            margin-right: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            padding: 0.5rem 0;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--accent);
+            transition: width 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* 英雄区域 */
+        .hero {
+            background: linear-gradient(135deg, rgba(44, 62, 80, 0.9), rgba(52, 152, 219, 0.8)),
+                        url('https://i.hd-r.icu/8522379096095b89a00b63bf10d19fc8.png');
+            height: 100vh;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, 
+                                        rgba(231, 76, 60, 0.2) 0%, 
+                                        transparent 70%);
+            animation: pulse 15s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.2; }
+            100% { transform: scale(1.2); opacity: 0.4; }
+        }
+
+        .hero-content {
+            max-width: 800px;
+            padding: 0 2rem;
+            z-index: 1;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        /* 主要内容区域 */
+        .container {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            margin-bottom: 6rem;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--primary);
+            position: relative;
+            display: inline-block;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+
+        /* 服务卡片 */
+        .services {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .service-card {
+            padding: 2.5rem;
+            border-radius: 15px;
+            background-color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: var(--secondary);
+        }
+
+        .service-card i {
+            font-size: 2.5rem;
+            color: var(--secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        .service-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        /* 作品集 */
+        .portfolio {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .portfolio-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 250px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .portfolio-item:hover {
+            transform: scale(1.03);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .portfolio-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .portfolio-item:hover .portfolio-img {
+            transform: scale(1.1);
+        }
+
+        .portfolio-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.215, 0.61, 0.355, 1);
+        }
+social-link
+        .portfolio-item:hover .portfolio-overlay {
+            transform: translateY(0);
+        }
+
+        /* 联系表单 */
+        .contact-form {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+            outline: none;
+        }
+
+        textarea.form-control {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            background-color: #c0392b;
+        }
+
+        /* 页脚 */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 4rem 0 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            text-align: left;
+        }
+
+        .footer-column h3 {
+            color: white;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .footer-column h3::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--accent);
+        }
+
+        .footer-column p {
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .social-link:hover {
+            background-color: var(--accent);
+            transform: translateY(-3px);
+        }
+
+        .copyright {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0.7;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .hero-content h1 {
+                font-size: 2.8rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 70px;
+                left: 0;
+                width: 100%;
+                background-color: var(--dark);
+                flex-direction: column;
+                align-items: center;
+                padding: 2rem 0;
+                gap: 1.5rem;
+                clip-path: circle(0px at 90% -10%);
+                transition: clip-path 0.8s cubic-bezier(0.86, 0, 0.07, 1);
+            }
+
+            .nav-links.active {
+                clip-path: circle(1000px at 90% -10%);
+            }
+
+            .hero-content h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero-content p {
+                font-size: 1rem;
+            }
+
+            .service-card {
+                padding: 2rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .hero-content h1 {
+                font-size: 1.8rem;
+            }
+
+            .container {
+                padding: 0 1.5rem;
+            }
+
+            .contact-form {
+                padding: 2rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="blur-overlay"></div>
+    
+    <header class="header" id="header">
+        <nav class="nav">
+            <div class="logo">
+                <span>没木工作室</span>
+            </div>
+            <div class="nav-links" id="navLinks">
+                <a href="#home" class="nav-link">首页</a>
+                <a href="#services" class="nav-link">服务项目</a>
+                <a href="#portfolio" class="nav-link">作品展示</a>
+                <a href="#about" class="nav-link">关于我们</a>
+                <a href="#contact" class="nav-link">联系我们</a>
+            </div>
+            <button class="mobile-menu-btn" id="menuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </nav>
+    </header>
+
+    <section class="hero" id="home">
+        <div class="hero-content animate">
+            <h1>创意驱动未来</h1>
+            <p>没木，让每个画面都值得被期待</p>
+            <a href="#contact" class="btn">开始合作</a>
+        </div>
+    </section>
+
+    <section class="container" id="services">
+        <h2 class="animate">我们的服务</h2>
+        <div class="services">
+            <div class="service-card animate">
+                <i class="fas fa-code"></i>
+                <h3>漫画制作</h3>
+                <p>定制化漫画创作，打造独特形象</p>
+            </div>
+            <div class="service-card animate">
+                <i class="fas fa-paint-brush"></i>
+                <h3>视频定制</h3>
+                <p>定制视频，解放双手。基础定价仅15元，吊打出生Sunny_DucK</p>
+            </div>
+            <div class="service-card animate">
+                <i class="fas fa-chart-line"></i>
+                <h3>数字营销</h3>
+                <p>接入鸟易平台，全方位网络推广解决方案</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="container" id="portfolio">
+        <h2 class="animate">作品展示</h2>
+        <div class="portfolio">
+            <div class="portfolio-item animate">
+                <img src="https://i.hd-r.icu/92517db0df755f500046384ac40a4e56.jpg" 
+                     alt="电商网站案例" 
+                     class="portfolio-img">
+                <div class="portfolio-overlay">
+                    <h3>催构电商</h3>
+                    <p>响应式设计，高性能购物体验</p>
+                </div>
+            </div>
+            <div class="portfolio-item animate">
+                <img src="https://i.hd-r.icu/eba8e0e5a043cb6907a76132cbd9988e.png" 
+                     alt="企业官网案例" 
+                     class="portfolio-img">
+                <div class="portfolio-overlay">
+                    <h3>prx官网</h3>
+                    <p>品牌形象展示，SEO优化</p>
+                </div>
+            </div>
+            <div class="portfolio-item animate">
+                <img src="https://i.hd-r.icu/00c74e677e756a5c611130db74fe67cb.png" 
+                     alt="移动应用案例" 
+                     class="portfolio-img">
+                <div class="portfolio-overlay">
+                    <h3>鸟易服务，鸟易商城，16视频等移动应用</h3>
+                    <p>跨平台开发，流畅用户体验</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container" id="about">
+        <h2 class="animate">关于我们</h2>
+        <div class="about-content animate">
+            <p>没木工作室成立于2024年，由张什多和切段创办。我们致力于通过创新思维和技术实力，为客户提供卓越的艺术解决方案。</p>
+            <p>我们的团队拥有丰富的行业经验，精通最新的图像和Web技术和设计趋势，能够将您的想法转化为令人印象深刻的产品体验。</p>
+            <p>我们相信，好的设计不仅仅是美观，更应该解决问题、创造价值。这就是为什么我们始终坚持"设计思维"的工作方式，从用户需求出发，打造真正有用的产品。</p>
+        </div>
+    </section>
+
+    <section class="container" id="contact">
+        <h2 class="animate">联系我们</h2>
+        <div class="contact-form animate">
+            <form id="contactForm">
+                <div class="form-group">
+                    <label for="name">姓名</label>
+                    <input type="text" id="name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">邮箱</label>
+                    <input type="email" id="email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">留言内容</label>
+                    <textarea id="message" class="form-control" required></textarea>
+                </div>
+                <button type="submit" class="btn-submit">发送信息</button>
+            </form>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3>没木工作室</h3>
+                <p>专业漫画与创意解决方案提供商，致力于为客户创造有价值的赤石体验。</p>
+                <div class="social-links">
+                    <a href="#" class="social-link"><i class="fab fa-qq"></i></a>
+                    <a href="https://space.bilibili.com/1719727401?spm_id_from=333.1007.0.0" class="social-link"><i class="fab fa-bilibili"></i></a>
+                    <a href="https://github.com/niaoyuzuanjia?tab=repositories" class="social-link"><i class="fab fa-github"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h3>快速链接</h3>
+                <p><a href="#home" class="nav-link">首页</a></p>
+                <p><a href="#services" class="nav-link">服务项目</a></p>
+                <p><a href="#portfolio" class="nav-link">作品展示</a></p>
+                <p><a href="#about" class="nav-link">关于我们</a></p>
+            </div>
+            <div class="footer-column">
+                <h3>联系方式</h3>
+                <p><i class="fas fa-envelope"></i> meimugzs@outlook.com</p>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>© 2025 没木工作室 保留所有权利</p>
+        </div>
+    </footer>
+
+    <script>
+        // 动态模糊效果
+        window.addEventListener('scroll', function() {
+            const scrollPosition = window.scrollY;
+            const blurOverlay = document.querySelector('.blur-overlay');
+            const header = document.getElementById('header');
+            
+            // 滚动超过100px时添加模糊效果
+            if (scrollPosition > 100) {
+                document.body.classList.add('scrolled');
+                header.classList.add('scrolled');
+            } else {
+                document.body.classList.remove('scrolled');
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // 滚动动画
+        const animateElements = document.querySelectorAll('.animate');
+        
+        function checkScroll() {
+            animateElements.forEach(element => {
+                const elementTop = element.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                
+                if (elementTop < windowHeight - 100) {
+                    element.classList.add('show');
+                }
+            });
+        }
+        
+        // 初始检查
+        checkScroll();
+        
+        // 滚动时检查
+        window.addEventListener('scroll', checkScroll);
+
+        // 移动菜单切换
+        const menuBtn = document.getElementById('menuBtn');
+        const navLinks = document.getElementById('navLinks');
+        
+        menuBtn.addEventListener('click', function() {
+            navLinks.classList.toggle('active');
+            menuBtn.innerHTML = navLinks.classList.contains('active') ? 
+                '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (navLinks.classList.contains('active')) {
+                    navLinks.classList.remove('active');
+                    menuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                }
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // 表单提交
+        const contactForm = document.getElementById('contactForm');
+        
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+            
+            // 这里使用邮件发送逻辑
+            const mailtoLink = `mailto:meimugzs@outlook.com?subject=来自${encodeURIComponent(name)}的咨询&body=${encodeURIComponent(message)}%0D%0A%0D%0A回复邮箱: ${encodeURIComponent(email)}`;
+            
+            window.location.href = mailtoLink;
+            
+            // 清空表单
+            contactForm.reset();
+            
+            // 显示成功消息
+            alert('感谢您的留言！我们将尽快回复您。');
+        });
+
+        // 非线性动画延迟
+        document.querySelectorAll('.animate').forEach((element, index) => {
+            element.style.transitionDelay = `${index * 0.1}s`;
+        });
+    </script>
+</body>
+</html>
